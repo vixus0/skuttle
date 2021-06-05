@@ -1,0 +1,19 @@
+name: release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ghcr.io/vixus0/skuttle:${{ github.event.release.tag_name }}

@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches:    
+      - main
+  pull_request:
+    branches:    
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      - name: run-tests
+        run: go test -v ./...
+  image:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    needs:
+      - test
+    steps:
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ghcr.io/vixus0/skuttle:main
