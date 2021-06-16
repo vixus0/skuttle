@@ -21,10 +21,10 @@ spec:
         - image: ghcr.io/vixus0/skuttle:v0.1.0
           name: skuttle
           resources:
-            limits:
+            requests:
               cpu: 50m
               memory: 100Mi
-            requests:
+            limits:
               cpu: 100m
               memory: 300Mi
           env:
