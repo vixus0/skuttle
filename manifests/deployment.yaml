@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skuttle
+  namespace: kube-system
+  labels:
+    app: skuttle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skuttle
+  template:
+    metadata:
+      labels:
+        app: skuttle
+    spec:
+      serviceAccountName: skuttle
+      containers:
+        - image: ghcr.io/vixus0/skuttle:v0.1.0
+          name: skuttle
+          resources:
+            limits:
+              cpu: 50m
+              memory: 100Mi
+            requests:
+              cpu: 100m
+              memory: 300Mi
+          env:
+            - name: NODE_SELECTOR
+              value: node.kubernetes.io/node
+            - name: NOT_READY_DURATION
+              value: 10m
+            - name: PROVIDERS
+              value: aws
+            - name: REFRESH_DURATION
+              value: 10s
+          envFrom:
+            - secretRef:
+                name: skuttle-aws
