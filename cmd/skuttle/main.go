@@ -48,11 +48,11 @@ func main() {
 	)
 
 	flag.StringVar(&argKubeconfig, "kubeconfig", StringEnv("KUBECONFIG", ""),
-		"path to kubeconfig file",
+		"path to kubeconfig file if not running in-cluster",
 	)
 
 	flag.StringVar(&argNodeSelector, "node-selector", StringEnv("NODE_SELECTOR", "node.kubernetes.io/node"),
-		"comma-separated list of node labels to skip handling",
+		"selector used to filter nodes skuttle should manage",
 	)
 
 	flag.DurationVar(&argNotReadyDuration, "not-ready-duration", DurationEnv("NOT_READY_DURATION", "10m"),
