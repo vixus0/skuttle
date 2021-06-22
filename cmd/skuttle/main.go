@@ -202,3 +202,14 @@ func DurationEnv(key string, defaultVal string) time.Duration {
 
 	return ret
 }
+
+func IntEnv(key string, defaultVal int) int {
+	if val, ok := os.LookupEnv(key); ok {
+		ret, err := strconv.Atoi(val)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return ret
+	}
+	return defaultVal
+}
