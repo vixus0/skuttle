@@ -10,6 +10,7 @@ import (
 
 	"github.com/vixus0/skuttle/v2/internal/controller"
 	"github.com/vixus0/skuttle/v2/internal/logging"
+	"github.com/vixus0/skuttle/v2/internal/metrics"
 	"github.com/vixus0/skuttle/v2/internal/provider"
 	"github.com/vixus0/skuttle/v2/internal/provider/aws"
 	"github.com/vixus0/skuttle/v2/internal/provider/file"
@@ -37,6 +38,10 @@ func main() {
 		argNotReadyDuration time.Duration
 		argRefreshDuration  time.Duration
 		argProviders        string
+
+		argPrometheus     bool
+		argPrometheusAddr string
+		argPrometheusPort int
 	)
 
 	flag.BoolVar(&argDryRun, "dry-run", BoolEnv("DRY_RUN", false),
@@ -65,6 +70,18 @@ func main() {
 
 	flag.StringVar(&argProviders, "providers", StringEnv("PROVIDERS", ""),
 		"comma-separated list of enabled providers",
+	)
+
+	flag.BoolVar(&argPrometheus, "enable-prometheus", BoolEnv("PROMETHEUS", false),
+		"enable prometheus metrics exposition",
+	)
+
+	flag.StringVar(&argPrometheusAddr, "prometheus-addr", StringEnv("PROMETHEUS_ADDR", ""),
+		"address to listen on for Prometheus metrics exposition, defaults to localhost",
+	)
+
+	flag.IntVar(&argPrometheusPort, "prometheus-port", IntEnv("PROMETHEUS_PORT", 9337),
+		"port to listen on for Prometheus metrics exposition",
 	)
 
 	flag.Parse()
@@ -139,6 +156,12 @@ func main() {
 		providerStore.Add(prefix, p)
 	}
 
+	var prom metrics.PrometheusExporter
+	if argPrometheus {
+		prom = metrics.NewPrometheusExporter(log, argPrometheusAddr, argPrometheusPort)
+		go prom.Run()
+	}
+
 	// Create node informer
 	tweakListOptions := informers.WithTweakListOptions(func(opts *metav1.ListOptions) {
 		opts.LabelSelector = argNodeSelector
@@ -168,6 +191,10 @@ func main() {
 	<-ctx.Done()
 	if err = ctx.Err(); err != nil {
 		runtime.HandleError(err)
+	}
+
+	if prom != nil {
+		prom.Wait()
 	}
 }
 
@@ -201,4 +228,15 @@ func DurationEnv(key string, defaultVal string) time.Duration {
 	}
 
 	return ret
+}
+
+func IntEnv(key string, defaultVal int) int {
+	if val, ok := os.LookupEnv(key); ok {
+		ret, err := strconv.Atoi(val)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return ret
+	}
+	return defaultVal
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/vixus0/skuttle/v2/internal/logging"
+	"github.com/vixus0/skuttle/v2/internal/metrics"
 	"github.com/vixus0/skuttle/v2/internal/provider"
 
 	v1 "k8s.io/api/core/v1"
@@ -107,6 +108,10 @@ func (c *Controller) Handle(n *node) error {
 		prefix := prefixParts[0]
 		provider, err := c.Providers.Get(prefix)
 
+		az := n.Labels["topology.kubernetes.io/zone"]
+		region := n.Labels["topology.kubernetes.io/region"]
+		itype := n.Labels["node.kubernetes.io/instance-type"]
+
 		// Check if instance exists
 		exists, err := provider.InstanceExists(n.ProviderID())
 		if err != nil {
@@ -116,9 +121,18 @@ func (c *Controller) Handle(n *node) error {
 		// Delete node if not
 		if exists {
 			log.Warn("node %s exists at provider", n.Name())
+			metrics.RecordNodeTerminationSkip(az, region, itype)
 		} else {
 			log.Info("deleting node %s", n.Name())
-			return c.deleteNode(n.Name())
+			err := c.deleteNode(n.Name())
+
+			if err == nil {
+				metrics.RecordNodeTermination(az, region, itype)
+			} else {
+				metrics.RecordNodeTerminationError(az, region, itype)
+			}
+
+			return err
 		}
 	}
 
@@ -128,10 +142,9 @@ func (c *Controller) Handle(n *node) error {
 func (c *Controller) deleteNode(name string) error {
 	if c.DryRun {
 		log.Info("*** DRY RUN *** deleted node %s", name)
-	} else {
-		return c.nodeDeleter.Delete(c.ctx, name, metav1.DeleteOptions{})
+		return nil
 	}
-	return nil
+	return c.nodeDeleter.Delete(c.ctx, name, metav1.DeleteOptions{})
 }
 
 func coerce(obj interface{}) *node {
