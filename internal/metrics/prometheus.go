@@ -20,45 +20,45 @@ var (
 			Name: "skuttle_teminations_total",
 			Help: "Total number of EC2 instance terminations",
 		},
-		[]string{"az", "region", "role"},
+		[]string{"az", "region", "instance_type"},
 	)
 	skuttleTerminationSkipsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "skuttle_temination_skips_total",
 			Help: "Total number of EC2 instance terminations skipped",
 		},
-		[]string{"az", "region", "role"},
+		[]string{"az", "region", "instance_type"},
 	)
 	skuttleTerminationErrorsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "skuttle_termination_errors_total",
 			Help: "Total number of errors terminating EC2 instances",
 		},
-		[]string{"az", "region", "role"},
+		[]string{"az", "region", "instance_type"},
 	)
 )
 
-func RecordNodeTermination(az, region, role string) {
+func RecordNodeTermination(az, region, itype string) {
 	skuttleTerminationsTotal.With(prometheus.Labels{
-		"az":     az,
-		"region": region,
-		"role":   role,
+		"az":            az,
+		"region":        region,
+		"instance_type": itype,
 	}).Inc()
 }
 
-func RecordNodeTerminationError(az, region, role string) {
+func RecordNodeTerminationError(az, region, itype string) {
 	skuttleTerminationErrorsTotal.With(prometheus.Labels{
-		"az":     az,
-		"region": region,
-		"role":   role,
+		"az":            az,
+		"region":        region,
+		"instance_type": itype,
 	}).Inc()
 }
 
-func RecordNodeTerminationSkip(az, region, role string) {
+func RecordNodeTerminationSkip(az, region, itype string) {
 	skuttleTerminationSkipsTotal.With(prometheus.Labels{
-		"az":     az,
-		"region": region,
-		"role":   role,
+		"az":            az,
+		"region":        region,
+		"instance_type": itype,
 	}).Inc()
 }
 

@@ -108,9 +108,9 @@ func (c *Controller) Handle(n *node) error {
 		prefix := prefixParts[0]
 		provider, err := c.Providers.Get(prefix)
 
-		az := n.Labels["failure-domain.beta.kubernetes.io/zone"]
-		region := n.Labels["failure-domain.beta.kubernetes.io/region"]
-		role := n.Labels["failure-domain.beta.kubernetes.io/role"]
+		az := n.Labels["topology.kubernetes.io/zone"]
+		region := n.Labels["topology.kubernetes.io/region"]
+		itype := n.Labels["node.kubernetes.io/instance-type"]
 
 		// Check if instance exists
 		exists, err := provider.InstanceExists(n.ProviderID())
@@ -121,15 +121,15 @@ func (c *Controller) Handle(n *node) error {
 		// Delete node if not
 		if exists {
 			log.Warn("node %s exists at provider", n.Name())
-			metrics.RecordNodeTerminationSkip(az, region, role)
+			metrics.RecordNodeTerminationSkip(az, region, itype)
 		} else {
 			log.Info("deleting node %s", n.Name())
 			err := c.deleteNode(n.Name())
 
 			if err == nil {
-				metrics.RecordNodeTermination(az, region, role)
+				metrics.RecordNodeTermination(az, region, itype)
 			} else {
-				metrics.RecordNodeTerminationError(az, region, role)
+				metrics.RecordNodeTerminationError(az, region, itype)
 			}
 
 			return err
