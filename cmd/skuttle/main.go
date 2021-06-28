@@ -86,6 +86,10 @@ func main() {
 	// Create Kubernetes client
 	log.Info("init")
 
+	if argDryRun {
+		log.Info("*** dry run mode - nodes will not be deleted! ***")
+	}
+
 	if argKubeconfig != "" {
 		log.Info("using config from: %s\n", argKubeconfig)
 	} else {
@@ -136,10 +140,13 @@ func main() {
 			log.Fatalf("error creating provider %v: %v", prefix, err)
 		}
 
+		log.Info("added provider for prefix: %s", prefix)
 		providerStore.Add(prefix, p)
 	}
 
 	// Create node informer
+	log.Info("using node selector: %s", argNodeSelector)
+	log.Info("informer refresh duration: %v", argRefreshDuration)
 	tweakListOptions := informers.WithTweakListOptions(func(opts *metav1.ListOptions) {
 		opts.LabelSelector = argNodeSelector
 	})
@@ -147,6 +154,7 @@ func main() {
 	nodeInformer := informerFactory.Core().V1().Nodes().Informer()
 
 	// Create controller
+	log.Info("not ready duration: %v", argNotReadyDuration)
 	cfg := &controller.Config{
 		DryRun:           argDryRun,
 		NotReadyDuration: argNotReadyDuration,
@@ -169,6 +177,8 @@ func main() {
 	if err = ctx.Err(); err != nil {
 		runtime.HandleError(err)
 	}
+
+	log.Info("clean exit")
 }
 
 func StringEnv(key string, defaultVal string) string {
