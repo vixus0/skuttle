@@ -54,10 +54,10 @@ func NewController(
 	return controller
 }
 
-// When a new node gets created
+// When a new node gets added to API
 func (c *Controller) Add(obj interface{}) {
 	n := coerce(obj)
-	log.Debug("add node %s", n.Name())
+	log.Info("node added: %s", n.Name())
 	if err := c.Handle(n); err != nil {
 		log.Error(err.Error())
 	}
@@ -66,7 +66,7 @@ func (c *Controller) Add(obj interface{}) {
 // When a node gets updated
 func (c *Controller) Update(_ interface{}, obj interface{}) {
 	n := coerce(obj)
-	log.Debug("update node %s", n.Name())
+	log.Debug("node updated: %s", n.Name())
 	if err := c.Handle(n); err != nil {
 		log.Error(err.Error())
 	}
@@ -75,7 +75,7 @@ func (c *Controller) Update(_ interface{}, obj interface{}) {
 // When a node gets deleted
 func (c *Controller) Delete(obj interface{}) {
 	n := coerce(obj)
-	log.Debug("remove node %s", n.Name())
+	log.Info("node deleted: %s", n.Name())
 }
 
 // Handle a node
